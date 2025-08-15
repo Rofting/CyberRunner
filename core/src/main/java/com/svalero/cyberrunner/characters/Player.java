@@ -1,17 +1,24 @@
 package com.svalero.cyberrunner.characters;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.math.Vector2;
 
 public class Player extends Actor {
 
     private Animation<TextureRegion> walkAnimation;
     private float stateTime;
 
+    private Vector2 velocity = new Vector2();
+    private boolean isJumping = false;
+
+    private static final float GRAVITY = -980f;
+    private static final float JUMP_VELOCITY = 400f;
     private float speed = 150f;
 
     public Player(TextureAtlas atlas) {
@@ -25,19 +32,31 @@ public class Player extends Actor {
         super.act(delta);
         stateTime += delta;
 
-        // Movimiento con teclado
+        velocity.y += GRAVITY * delta;
+
+        // Movilidad
         if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.LEFT)) {
-            moveBy(-speed * delta, 0);
+            velocity.x = -speed * delta;
+        } else if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.RIGHT)) {
+            velocity.x = speed;
+        } else {
+            velocity.x = 0;
         }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.RIGHT)) {
-            moveBy(speed * delta, 0);
+
+        //Salto
+        if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && !isJumping) {
+            velocity.y = JUMP_VELOCITY;
+            isJumping = true;
         }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.UP)) {
-            moveBy(0, speed * delta);
+
+        //Caida
+        if (getY() < 50) {
+            setY(50);
+            isJumping = false;
         }
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.DOWN)) {
-            moveBy(0, -speed * delta);
-        }
+
+        moveBy(velocity.x * delta, velocity.y * delta);
+
     }
 
     @Override
