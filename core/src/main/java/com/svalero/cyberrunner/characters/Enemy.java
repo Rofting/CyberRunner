@@ -24,5 +24,5 @@ public abstract class Enemy extends Actor {
     }
 
     @Override
-    public abstract void act(float delta); // Implementado por subclases
+    public abstract void act(float delta);
 }
