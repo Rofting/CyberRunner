@@ -53,14 +53,15 @@ public class GameScreen implements Screen {
                 collisionObjects.add(obj.getRectangle());
             }
         }
+        System.out.println("Colisiones cargadas: " + collisionObjects.size);
 
-        String characterToLoad = "player/Rex/Cyborg";       // Opción 1: Controlar a Rex
+        //String characterToLoad = "player/Rex";       // Opción 1: Controlar a Rex
         // String characterToLoad = "player/Kael/Biker";    // Opción 2: Controlar a Kael
         // String characterToLoad = "player/Anya/Punk";     // Opción 3: Controlar a Anya
 
-        // Crea al jugador pasándole el prefijo del personaje, el atlas y las colisiones
-        player = new Player(characterToLoad, atlas, collisionObjects);
-        player.setPosition(100, 150); // Posición inicial
+
+        player = new Player(collisionObjects);
+        player.setPosition(100, 150);
         stage.addActor(player);
     }
 
