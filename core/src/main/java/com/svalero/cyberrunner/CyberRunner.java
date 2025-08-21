@@ -2,7 +2,9 @@ package com.svalero.cyberrunner;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.kotcrab.vis.ui.VisUI;
 import com.svalero.cyberrunner.managers.ResourceManager;
+import com.svalero.cyberrunner.screens.GameScreen;
 import com.svalero.cyberrunner.screens.SplashScreen;
 
 
@@ -17,7 +19,7 @@ public class CyberRunner extends Game {
 
         resourceManager = new ResourceManager();
 
-        this.setScreen(new SplashScreen(this));
+        this.setScreen(new GameScreen(this));
     }
 
     @Override

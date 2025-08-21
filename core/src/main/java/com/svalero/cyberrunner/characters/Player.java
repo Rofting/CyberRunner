@@ -2,66 +2,102 @@ package com.svalero.cyberrunner.characters;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.utils.Array;
 
 public class Player extends Actor {
 
-    private Animation<TextureRegion> walkAnimation;
-    private float stateTime;
+    private final Texture debugTexture;
 
-    private Vector2 velocity = new Vector2();
-    private boolean isJumping = false;
+    private final Vector2 velocity;
+    private boolean isJumping;
+    private static final float SPEED = 200f;
+    private static final float JUMP_VELOCITY = 450f;
+    private static final float GRAVITY = -1000f;
 
-    private static final float GRAVITY = -980f;
-    private static final float JUMP_VELOCITY = 400f;
-    private float speed = 150f;
+    private final Rectangle bounds;
+    private final Array<Rectangle> collisionRects;
 
-    public Player(TextureAtlas atlas) {
-        // Creamos la animación usando las regiones del atlas llamadas "player_walk"
-        walkAnimation = new Animation<>(0.1f, atlas.findRegions("player_walk"), Animation.PlayMode.LOOP);
-        setBounds(getX(), getY(), walkAnimation.getKeyFrame(0).getRegionWidth(), walkAnimation.getKeyFrame(0).getRegionHeight());
+    public Player(Array<Rectangle> collisionRects) {
+        this.collisionRects = collisionRects;
+        this.velocity = new Vector2();
+
+        // --- CREACIÓN DEL CUADRADO VERDE DE PRUEBA ---
+        Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+        pixmap.setColor(Color.GREEN);
+        pixmap.fill();
+        debugTexture = new Texture(pixmap);
+        pixmap.dispose();
+
+        float width = 48;
+        float height = 48;
+        setSize(width, height);
+        this.bounds = new Rectangle(getX(), getY(), width, height);
     }
 
     @Override
     public void act(float delta) {
         super.act(delta);
-        stateTime += delta;
-
         velocity.y += GRAVITY * delta;
-
-        // Movilidad
-        if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.LEFT)) {
-            velocity.x = -speed * delta;
-        } else if (Gdx.input.isKeyPressed(com.badlogic.gdx.Input.Keys.RIGHT)) {
-            velocity.x = speed;
-        } else {
-            velocity.x = 0;
-        }
-
-        //Salto
-        if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && !isJumping) {
-            velocity.y = JUMP_VELOCITY;
-            isJumping = true;
-        }
-
-        //Caida
-        if (getY() < 50) {
-            setY(50);
-            isJumping = false;
-        }
-
-        moveBy(velocity.x * delta, velocity.y * delta);
-
+        handleInput();
+        handleCollisions(delta);
     }
 
     @Override
     public void draw(Batch batch, float parentAlpha) {
-        TextureRegion currentFrame = walkAnimation.getKeyFrame(stateTime);
-        batch.draw(currentFrame, getX(), getY());
+
+        batch.draw(debugTexture, getX(), getY(), getWidth(), getHeight());
+    }
+
+    private void handleInput() {
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            velocity.x = -SPEED;
+        } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            velocity.x = SPEED;
+        } else {
+            velocity.x = 0;
+        }
+
+        if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && !isJumping) {
+            velocity.y = JUMP_VELOCITY;
+            isJumping = true;
+        }
+    }
+
+    private void handleCollisions(float delta) {
+        float oldX = getX(), oldY = getY();
+
+        setX(getX() + velocity.x * delta);
+        bounds.x = getX();
+        for (Rectangle rect : collisionRects) {
+            if (bounds.overlaps(rect)) {
+                setX(oldX);
+                velocity.x = 0;
+                break;
+            }
+        }
+
+        setY(getY() + velocity.y * delta);
+        bounds.y = getY();
+        for (Rectangle rect : collisionRects) {
+            if (bounds.overlaps(rect)) {
+                if (velocity.y < 0) {
+                    isJumping = false;
+                }
+                setY(oldY);
+                velocity.y = 0;
+                break;
+            }
+        }
+    }
+
+    public void dispose() {
+        debugTexture.dispose();
     }
 }
