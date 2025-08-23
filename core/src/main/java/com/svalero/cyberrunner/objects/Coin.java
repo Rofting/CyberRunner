@@ -1,4 +1,4 @@
-package com.svalero.cyberrunner.objects; // O el paquete donde la hayas creado
+package com.svalero.cyberrunner.objects;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Pixmap;

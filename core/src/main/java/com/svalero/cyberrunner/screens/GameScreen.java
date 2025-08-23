@@ -1,6 +1,7 @@
 package com.svalero.cyberrunner.screens;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -11,6 +12,7 @@ import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
@@ -19,7 +21,11 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.svalero.cyberrunner.CyberRunner;
 import com.svalero.cyberrunner.characters.Drone;
+import com.svalero.cyberrunner.characters.Merchant;
 import com.svalero.cyberrunner.characters.Player;
+import com.svalero.cyberrunner.characters.Turret;
+import com.svalero.cyberrunner.managers.SoundManager;
+import com.svalero.cyberrunner.objects.Bullet;
 import com.svalero.cyberrunner.objects.Coin;
 
 public class GameScreen implements Screen {
@@ -27,21 +33,25 @@ public class GameScreen implements Screen {
     private final CyberRunner game;
     private final Stage stage;
     private final OrthographicCamera camera;
-
     private final TiledMap map;
     private final OrthogonalTiledMapRenderer mapRenderer;
 
     private final Player player;
     private final Drone testDrone;
-    private final Array<Rectangle> collisionObjects;
     private Coin testCoin;
+    private final Turret testTurret;
+    private final Merchant testMerchant;
+    private final Array<Rectangle> collisionObjects;
 
     private final Stage hudStage;
     private final Label scoreLabel;
     private final Label levelLabel;
     private final Label energyLabel;
+    private final Label messageLabel;
     private int score;
+    private boolean isInConversation = false;
 
+    private final SoundManager soundManager;
 
     public GameScreen(CyberRunner game) {
         this.game = game;
@@ -51,10 +61,11 @@ public class GameScreen implements Screen {
         stage = new Stage(viewport, game.batch);
         Gdx.input.setInputProcessor(stage);
 
-
         map = game.resourceManager.get("maps/level_01_industrias.tmx", TiledMap.class);
-
         mapRenderer = new OrthogonalTiledMapRenderer(map);
+
+        soundManager = new SoundManager(game.resourceManager);
+        soundManager.playMusic();
 
         collisionObjects = new Array<>();
         MapLayer collisionLayer = map.getLayers().get("Collisions");
@@ -63,18 +74,24 @@ public class GameScreen implements Screen {
                 collisionObjects.add(obj.getRectangle());
             }
         }
-        System.out.println("Colisiones cargadas: " + collisionObjects.size);
 
-        player = new Player(this, collisionObjects);
+        player = new Player(this, soundManager, collisionObjects);
         player.setPosition(100, 150);
         stage.addActor(player);
 
         testDrone = new Drone(300, 150);
         stage.addActor(testDrone);
 
-        testCoin = new Coin(300,200);
+        testCoin = new Coin(300, 300);
         stage.addActor(testCoin);
 
+        testTurret = new Turret(400, 80);
+        stage.addActor(testTurret);
+
+        testMerchant = new Merchant(500, 80);
+        stage.addActor(testMerchant);
+
+        // --- INICIALIZACIÓN DEL HUD ---
         hudStage = new Stage(new ScreenViewport());
         Label.LabelStyle labelStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
 
@@ -82,6 +99,7 @@ public class GameScreen implements Screen {
         scoreLabel = new Label("PUNTOS: " + score, labelStyle);
         levelLabel = new Label("NIVEL: 1", labelStyle);
         energyLabel = new Label("ENERGIA: 100", labelStyle);
+        messageLabel = new Label("", labelStyle);
 
         Table table = new Table();
         table.top().left();
@@ -93,25 +111,11 @@ public class GameScreen implements Screen {
         table.add(levelLabel).left();
         table.row();
         table.add(energyLabel).left();
+        table.row();
+        table.add(messageLabel).left().padTop(20);
 
         hudStage.addActor(table);
     }
-
-    private void checkCollisions() {
-        if (testCoin != null && player.getBounds().overlaps(testCoin.bounds)) {
-            addScore(10);
-            testCoin.remove();
-            testCoin.dispose();
-            testCoin = null;
-        }
-
-        if (testDrone != null && player.getBounds().overlaps(testDrone.getBounds())) {
-            player.takeDamage(10);
-            updateEnergyLabel(player.getEnergy());
-
-        }
-    }
-
 
     @Override
     public void render(float delta) {
@@ -122,16 +126,58 @@ public class GameScreen implements Screen {
         camera.update();
 
         stage.act(delta);
-
         checkCollisions();
+        handleMerchantInteraction();
 
         mapRenderer.setView(camera);
         mapRenderer.render();
 
         stage.draw();
-
-        hudStage.act(delta);
         hudStage.draw();
+    }
+
+    private void checkCollisions() {
+        if (testCoin != null && player.getBounds().overlaps(testCoin.bounds)) {
+            addScore(10);
+            soundManager.playCoinSound();
+            testCoin.remove();
+            testCoin.dispose();
+            testCoin = null;
+        }
+
+        if (testDrone != null && player.getBounds().overlaps(testDrone.getBounds())) {
+            player.takeDamage(10);
+            updateEnergyLabel(player.getEnergy());
+        }
+
+        for (Actor actor : stage.getActors()) {
+            if (actor instanceof Bullet) {
+                Bullet bullet = (Bullet) actor;
+                if (player.getBounds().overlaps(bullet.getBounds())) {
+                    player.takeDamage(5);
+                    updateEnergyLabel(player.getEnergy());
+                    bullet.remove();
+                    bullet.dispose();
+                }
+            }
+        }
+    }
+
+    private void handleMerchantInteraction() {
+        float distance = Math.abs(player.getX() - testMerchant.getX());
+        if (distance < 50) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.E) && !isInConversation) {
+                isInConversation = true;
+            }
+            if (isInConversation) {
+                messageLabel.setText("Cuidado con las torretas...");
+            } else {
+                messageLabel.setText("[E] para hablar");
+            }
+        } else {
+            isInConversation = false;
+            messageLabel.setText("");
+        }
     }
 
     public void addScore(int points) {
@@ -156,6 +202,11 @@ public class GameScreen implements Screen {
         hudStage.dispose();
         player.dispose();
         testDrone.dispose();
+        testTurret.dispose();
+        testMerchant.dispose();
+        if (testCoin != null) {
+            testCoin.dispose();
+        }
     }
 
     @Override
