@@ -1,31 +1,54 @@
 package com.svalero.cyberrunner.characters;
 
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Batch;
-import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle; // <-- IMPORTACIÓN CORREGIDA
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.Gdx;
 
-public class Drone extends Enemy {
+public class Drone extends Actor {
 
-    private boolean movingRight = true;
+    public final Rectangle bounds;
+    private final Texture texture;
+    private float speed = 100f;
+    private final float startX;
+    private final float patrolRange = 150f;
 
-    public Drone(TextureAtlas atlas) {
-        super(atlas, "drone", 0.1f);
+    public Drone(float x, float y) {
+        Pixmap pixmap = new Pixmap(24, 24, Pixmap.Format.RGBA8888);
+        pixmap.setColor(Color.RED);
+        pixmap.fill();
+        texture = new Texture(pixmap);
+        pixmap.dispose();
+
+        // --- POSICIÓN Y TAMAÑO ---
+        this.startX = x;
+        setPosition(x, y);
+        setSize(24, 24);
+        this.bounds = new Rectangle(x, y, getWidth(), getHeight());
     }
 
     @Override
     public void act(float delta) {
-        super.stateTime += delta;
+        moveBy(speed * delta, 0);
 
-        if (movingRight) {
-            moveBy(speed * delta, 0);
-            if (getX() > 700) movingRight = false;
-        } else {
-            moveBy(-speed * delta, 0);
-            if (getX() < 100) movingRight = true;
+        if (getX() > startX + patrolRange || getX() < startX) {
+            speed = -speed;
         }
     }
-}
 
+    @Override
+    public void draw(Batch batch, float parentAlpha) {
+        batch.draw(texture, getX(), getY(), getWidth(), getHeight());
+    }
+
+    public Rectangle getBounds() {
+        bounds.setPosition(getX(), getY());
+        return bounds;
+    }
+
+    public void dispose() {
+        texture.dispose();
+    }
+}
