@@ -1,31 +1,35 @@
 package com.svalero.cyberrunner.characters;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 
-public class Merchant extends NPC {
+public class Merchant extends Actor {
 
-    private Player player;
-    private boolean playerNearby = false;
-    private boolean messageShown = false;
+    private final Texture texture;
+    public final Rectangle bounds;
 
-    public Merchant(com.badlogic.gdx.graphics.g2d.TextureAtlas atlas, Player player) {
-        super(atlas, "merchant", 0.2f); // usa "merchant" del atlas con 0.2s por frame
-        this.player = player;
+    public Merchant(float x, float y) {
+        Pixmap pixmap = new Pixmap(32, 64, Pixmap.Format.RGBA8888);
+        pixmap.setColor(Color.CYAN);
+        pixmap.fill();
+        texture = new Texture(pixmap);
+        pixmap.dispose();
+
+        setSize(32, 64);
+        setPosition(x, y);
+        this.bounds = new Rectangle(x, y, getWidth(), getHeight());
     }
 
     @Override
-    public void act(float delta) {
-        super.stateTime += delta;
+    public void draw(Batch batch, float parentAlpha) {
+        batch.draw(texture, getX(), getY(), getWidth(), getHeight());
+    }
 
-        // Detectar si el jugador está cerca horizontalmente
-        float distance = Math.abs(getX() - player.getX());
-        playerNearby = distance < 80;
-
-        // Si está cerca y presiona ESPACIO, muestra un mensaje (una sola vez)
-        if (playerNearby && Gdx.input.isKeyJustPressed(Input.Keys.SPACE) && !messageShown) {
-            Gdx.app.log("Merchant", "¡Recuerda usar los powerups para escapar más rápido!");
-            messageShown = true;
-        }
+    public void dispose() {
+        texture.dispose();
     }
 }

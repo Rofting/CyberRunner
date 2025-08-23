@@ -10,8 +10,12 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.utils.Array;
+import com.svalero.cyberrunner.managers.SoundManager;
+import com.svalero.cyberrunner.screens.GameScreen;
 
 public class Player extends Actor {
+
+    private final GameScreen screen;
 
     private final Texture debugTexture;
 
@@ -24,7 +28,13 @@ public class Player extends Actor {
     private final Rectangle bounds;
     private final Array<Rectangle> collisionRects;
 
-    public Player(Array<Rectangle> collisionRects) {
+    private int energy = 100;
+
+    private final SoundManager soundManager;
+
+    public Player(GameScreen screen,SoundManager soundManager, Array<Rectangle> collisionRects) {
+        this.screen = screen;
+        this.soundManager = soundManager;
         this.collisionRects = collisionRects;
         this.velocity = new Vector2();
 
@@ -67,6 +77,7 @@ public class Player extends Actor {
         if (Gdx.input.isKeyJustPressed(Input.Keys.UP) && !isJumping) {
             velocity.y = JUMP_VELOCITY;
             isJumping = true;
+            soundManager.playJumpSound();
         }
     }
 
@@ -97,7 +108,24 @@ public class Player extends Actor {
         }
     }
 
+    public void takeDamage(int damage){
+        this.energy -= damage;
+        System.out.println("Energy: " + energy);
+
+        if (this.energy <= 0) {
+            System.out.println("Game Over!");
+        }
+    }
+    public int getEnergy() {
+        return energy;
+    }
+
     public void dispose() {
         debugTexture.dispose();
+    }
+
+    public Rectangle getBounds() {
+        bounds.setPosition(getX(), getY());
+        return bounds;
     }
 }

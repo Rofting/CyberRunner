@@ -1,6 +1,8 @@
 package com.svalero.cyberrunner.managers;
 
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
@@ -17,6 +19,12 @@ public class ResourceManager {
         assetManager.load("maps/level_01_industrias.tmx", TiledMap.class);
 
         assetManager.load("atlas/game.atlas", TextureAtlas.class);
+
+        assetManager.load("audio/music.mp3", Music.class);
+
+        assetManager.load("audio/jump.wav", Sound.class);
+
+        assetManager.load("audio/coin.wav", Sound.class);
 
         assetManager.finishLoading();
     }
