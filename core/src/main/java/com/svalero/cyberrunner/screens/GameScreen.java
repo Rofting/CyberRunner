@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.maps.MapLayer;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
@@ -53,18 +54,20 @@ public class GameScreen implements Screen {
 
     private final SoundManager soundManager;
 
-    public GameScreen(CyberRunner game) {
+    public GameScreen(CyberRunner game, String mapFile) {
         this.game = game;
+        this.soundManager = game.soundManager;
 
         camera = new OrthographicCamera();
         FitViewport viewport = new FitViewport(800, 480, camera);
         stage = new Stage(viewport, game.batch);
         Gdx.input.setInputProcessor(stage);
 
-        map = game.resourceManager.get("maps/level_01_industrias.tmx", TiledMap.class);
-        mapRenderer = new OrthogonalTiledMapRenderer(map);
+        map = game.resourceManager.get(mapFile, TiledMap.class);
+        TextureAtlas playerAtlas = game.resourceManager.get("atlas/player.atlas", TextureAtlas.class);
+        TextureAtlas enemyAtlas = game.resourceManager.get("atlas/enemies.atlas", TextureAtlas.class);
 
-        soundManager = new SoundManager(game.resourceManager);
+        mapRenderer = new OrthogonalTiledMapRenderer(map);
         soundManager.playMusic();
 
         collisionObjects = new Array<>();
@@ -75,23 +78,23 @@ public class GameScreen implements Screen {
             }
         }
 
-        player = new Player(this, soundManager, collisionObjects);
+        String characterToLoad = "Rex";
+        player = new Player(characterToLoad, this, soundManager, collisionObjects);
         player.setPosition(100, 150);
         stage.addActor(player);
 
-        testDrone = new Drone(300, 150);
+        testDrone = new Drone(enemyAtlas, 300, 150);
         stage.addActor(testDrone);
 
-        testCoin = new Coin(300, 300);
+        testCoin = new Coin(200, 100);
         stage.addActor(testCoin);
 
-        testTurret = new Turret(400, 80);
+        testTurret = new Turret(enemyAtlas, soundManager, 400, 400);
         stage.addActor(testTurret);
 
-        testMerchant = new Merchant(500, 80);
+        testMerchant = new Merchant(enemyAtlas, 500, 200);
         stage.addActor(testMerchant);
 
-        // --- INICIALIZACIÓN DEL HUD ---
         hudStage = new Stage(new ScreenViewport());
         Label.LabelStyle labelStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
 
@@ -115,6 +118,7 @@ public class GameScreen implements Screen {
         table.add(messageLabel).left().padTop(20);
 
         hudStage.addActor(table);
+
     }
 
     @Override
@@ -189,6 +193,12 @@ public class GameScreen implements Screen {
         energyLabel.setText("ENERGIA: " + energy);
     }
 
+    public void gameOver() {
+        System.out.println("GAME OVER");
+        soundManager.stopMusic();
+        game.setScreen(new GameOverScreen(game));
+    }
+
     @Override
     public void resize(int width, int height) {
         stage.getViewport().update(width, height, true);
@@ -200,13 +210,13 @@ public class GameScreen implements Screen {
         map.dispose();
         stage.dispose();
         hudStage.dispose();
-        player.dispose();
-        testDrone.dispose();
-        testTurret.dispose();
-        testMerchant.dispose();
         if (testCoin != null) {
             testCoin.dispose();
         }
+    }
+
+    public CyberRunner getGame() {
+        return game;
     }
 
     @Override
@@ -217,4 +227,5 @@ public class GameScreen implements Screen {
     public void resume() {}
     @Override
     public void hide() {}
+
 }

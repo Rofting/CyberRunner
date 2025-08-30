@@ -1,35 +1,42 @@
 package com.svalero.cyberrunner.characters;
 
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Pixmap;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 
 public class Merchant extends Actor {
 
-    private final Texture texture;
+    private final Animation<TextureRegion> idleAnimation;
+    private float stateTime;
     public final Rectangle bounds;
 
-    public Merchant(float x, float y) {
-        Pixmap pixmap = new Pixmap(32, 64, Pixmap.Format.RGBA8888);
-        pixmap.setColor(Color.CYAN);
-        pixmap.fill();
-        texture = new Texture(pixmap);
-        pixmap.dispose();
+    public Merchant(TextureAtlas atlas, float x, float y) {
+        this.stateTime = 0f;
 
-        setSize(32, 64);
+        this.idleAnimation = new Animation<>(0.2f, atlas.findRegions("Mercader/Mercader_idle"), Animation.PlayMode.LOOP);
+
+        if (idleAnimation.getKeyFrames().length > 0) {
+            setSize(idleAnimation.getKeyFrame(0).getRegionWidth(), idleAnimation.getKeyFrame(0).getRegionHeight());
+        }
+
         setPosition(x, y);
         this.bounds = new Rectangle(x, y, getWidth(), getHeight());
     }
 
     @Override
-    public void draw(Batch batch, float parentAlpha) {
-        batch.draw(texture, getX(), getY(), getWidth(), getHeight());
+    public void act(float delta) {
+        super.act(delta);
+        stateTime += delta;
     }
 
-    public void dispose() {
-        texture.dispose();
+    @Override
+    public void draw(Batch batch, float parentAlpha) {
+        if (idleAnimation.getKeyFrames().length == 0) return;
+
+        TextureRegion currentFrame = idleAnimation.getKeyFrame(stateTime, true);
+        batch.draw(currentFrame, getX(), getY(), getWidth(), getHeight());
     }
 }

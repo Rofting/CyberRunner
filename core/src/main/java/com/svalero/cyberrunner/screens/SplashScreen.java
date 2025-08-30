@@ -18,26 +18,21 @@ public class SplashScreen implements Screen {
 
     @Override
     public void show() {
-        // Carga una imagen simple para mostrar.
-        // Este archivo debe estar en tu carpeta `assets`.
         splashImage = new Texture("splash.png");
 
-        // Programa una tarea para cambiar de pantalla después de 2 segundos.
         Timer.schedule(new Timer.Task() {
             @Override
             public void run() {
-                game.setScreen(new GameScreen(game));
+                game.setScreen(new GameScreen(game, "maps/level_01_industrias.tmx"));
             }
         }, 2);
     }
 
     @Override
     public void render(float delta) {
-        // Limpia la pantalla
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        // Dibuja la imagen de splash a pantalla completa
         game.batch.begin();
         game.batch.draw(splashImage, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         game.batch.end();
@@ -45,7 +40,6 @@ public class SplashScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        // No es necesario gestionar el re-escalado aquí
     }
 
     @Override
@@ -58,7 +52,6 @@ public class SplashScreen implements Screen {
 
     @Override
     public void hide() {
-        // Libera la imagen cuando la pantalla ya no se vea
         dispose();
     }
 
