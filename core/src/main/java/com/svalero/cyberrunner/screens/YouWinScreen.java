@@ -13,12 +13,12 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.kotcrab.vis.ui.VisUI;
 import com.svalero.cyberrunner.CyberRunner;
 
-public class GameOverScreen implements Screen {
+public class YouWinScreen implements Screen {
 
     private final CyberRunner game;
     private final Stage stage;
 
-    public GameOverScreen(final CyberRunner game) {
+    public YouWinScreen(final CyberRunner game) {
         this.game = game;
         this.stage = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(stage);
@@ -27,12 +27,12 @@ public class GameOverScreen implements Screen {
         table.setFillParent(true);
         table.center();
 
-        Label gameOverLabel = new Label("GAME OVER", VisUI.getSkin());
+        Label winLabel = new Label("¡HAS GANADO!", VisUI.getSkin(), "title");
 
         TextButton playAgainButton = new TextButton("Volver a Jugar", VisUI.getSkin());
         TextButton exitButton = new TextButton("Salir al Menu", VisUI.getSkin());
 
-        table.add(gameOverLabel).padBottom(40);
+        table.add(winLabel).padBottom(40);
         table.row();
         table.add(playAgainButton).pad(10).fillX().uniformX();
         table.row();
@@ -63,27 +63,10 @@ public class GameOverScreen implements Screen {
         stage.draw();
     }
 
-    @Override
-    public void show() {}
-
-    @Override
-    public void resize(int width, int height) {
-        stage.getViewport().update(width, height, true);
-    }
-
-    @Override
-    public void pause() {}
-
-    @Override
-    public void resume() {}
-
-    @Override
-    public void hide() {
-        dispose();
-    }
-
-    @Override
-    public void dispose() {
-        stage.dispose();
-    }
+    @Override public void show() {}
+    @Override public void resize(int width, int height) { stage.getViewport().update(width, height, true); }
+    @Override public void pause() {}
+    @Override public void resume() {}
+    @Override public void hide() { dispose(); }
+    @Override public void dispose() { stage.dispose(); }
 }

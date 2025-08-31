@@ -36,4 +36,3 @@ public class CyborgGuard extends Enemy {
         }
     }
 }
-
