@@ -34,16 +34,18 @@ public class Player extends Actor {
     private static final float JUMP_VELOCITY = 450f;
     private static final float GRAVITY = -1000f;
 
+    private final float mapWidth;
     private final Rectangle bounds;
     private final Array<Rectangle> collisionRects;
     private int energy = 100;
 
-    public Player(String characterName, GameScreen screen, SoundManager soundManager, Array<Rectangle> collisionRects) {
+    public Player(String characterName, GameScreen screen, SoundManager soundManager, Array<Rectangle> collisionRects, float mapWidth) {
         this.screen = screen;
         this.soundManager = soundManager;
         this.collisionRects = collisionRects;
         this.velocity = new Vector2();
         this.animations = new HashMap<>();
+        this.mapWidth = mapWidth;
 
         TextureAtlas atlas = screen.getGame().resourceManager.get("atlas/player.atlas", TextureAtlas.class);
 
@@ -101,6 +103,10 @@ public class Player extends Actor {
         if (currentState != State.DEAD) handleInput();
         handleCollisions(delta);
         updateState();
+
+        if (getY() < -100){
+            screen.gameOver();
+        }
     }
 
     private void handleInput() {
@@ -183,6 +189,18 @@ public class Player extends Actor {
                 bounds.y = getY();
                 break;
             }
+        }
+        // --- COMPROBACIÓN DE LÍMITES DEL MAPA ---
+
+        // Límite izquierdo
+        if (getX() < 0) {
+            setX(0);
+            velocity.x = 0;
+        }
+        // Límite derecho
+        if (getX() + getWidth() > mapWidth) {
+            setX(mapWidth - getWidth());
+            velocity.x = 0;
         }
     }
 

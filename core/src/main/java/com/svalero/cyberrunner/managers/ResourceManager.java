@@ -16,6 +16,7 @@ public class ResourceManager {
         assetManager.setLoader(TiledMap.class, new TmxMapLoader());
 
         assetManager.load("maps/level_01_industrias.tmx", TiledMap.class);
+        assetManager.load("maps/level_02_seaport.tmx", TiledMap.class);
         assetManager.load("atlas/player.atlas", TextureAtlas.class);
         assetManager.load("atlas/enemies.atlas", TextureAtlas.class);
         assetManager.load("audio/music.mp3", Music.class);

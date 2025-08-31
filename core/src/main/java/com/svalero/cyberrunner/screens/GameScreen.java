@@ -38,11 +38,9 @@ public class GameScreen implements Screen {
     private final OrthogonalTiledMapRenderer mapRenderer;
 
     private final Player player;
-    private final Drone testDrone;
-    private Coin testCoin;
-    private final Turret testTurret;
-    private final Merchant testMerchant;
     private final Array<Rectangle> collisionObjects;
+    private Rectangle exitPortal;
+    private Rectangle victoryPortal;
 
     private final Stage hudStage;
     private final Label scoreLabel;
@@ -70,6 +68,7 @@ public class GameScreen implements Screen {
         mapRenderer = new OrthogonalTiledMapRenderer(map);
         soundManager.playMusic();
 
+        // --- Carga de Colisiones ---
         collisionObjects = new Array<>();
         MapLayer collisionLayer = map.getLayers().get("Collisions");
         if (collisionLayer != null) {
@@ -78,30 +77,55 @@ public class GameScreen implements Screen {
             }
         }
 
+        // --- Carga de Triggers (Portales) ---
+        MapLayer triggerLayer = map.getLayers().get("Triggers");
+        if (triggerLayer != null) {
+            for (RectangleMapObject obj : triggerLayer.getObjects().getByType(RectangleMapObject.class)) {
+                if ("exit_portal".equals(obj.getName())) {
+                    this.exitPortal = obj.getRectangle();
+                } else if ("victory_portal".equals(obj.getName())) {
+                    this.victoryPortal = obj.getRectangle();
+                }
+            }
+        }
+        int mapWidthInTiles = map.getProperties().get("width", Integer.class);
+        int tileWidthInPixels = map.getProperties().get("tilewidth", Integer.class);
+        float mapWidthInPixels = mapWidthInTiles * tileWidthInPixels;
+
+        // --- Creación del Jugador ---
         String characterToLoad = "Rex";
-        player = new Player(characterToLoad, this, soundManager, collisionObjects);
+        player = new Player(characterToLoad, this, soundManager, collisionObjects, mapWidthInPixels);
         player.setPosition(100, 150);
         stage.addActor(player);
 
-        testDrone = new Drone(enemyAtlas, 300, 150);
-        stage.addActor(testDrone);
+        // --- Carga de ENEMIGOS y NPCS desde el MAPA ---
+        MapLayer characterLayer = map.getLayers().get("Characters");
+        if (characterLayer != null) {
+            for (RectangleMapObject obj : characterLayer.getObjects().getByType(RectangleMapObject.class)) {
+                String type = obj.getName();
+                float x = obj.getRectangle().x;
+                float y = obj.getRectangle().y;
 
-        testCoin = new Coin(200, 100);
-        stage.addActor(testCoin);
+                if ("Drone".equals(type)) {
+                    stage.addActor(new Drone(enemyAtlas, collisionObjects, x, y));
+                } else if ("Turret".equals(type)) {
+                    stage.addActor(new Turret(enemyAtlas, soundManager, x, y));
+                } else if ("Merchant".equals(type)) {
+                    stage.addActor(new Merchant(enemyAtlas, x, y));
+                } else if ("Coin".equals(type)) {
+                    stage.addActor(new Coin(x, y));
+                }
+            }
+        }
 
-        testTurret = new Turret(enemyAtlas, soundManager, 400, 400);
-        stage.addActor(testTurret);
-
-        testMerchant = new Merchant(enemyAtlas, 500, 200);
-        stage.addActor(testMerchant);
-
+        // --- Inicialización del HUD ---
         hudStage = new Stage(new ScreenViewport());
         Label.LabelStyle labelStyle = new Label.LabelStyle(new BitmapFont(), Color.WHITE);
 
         score = 0;
         scoreLabel = new Label("PUNTOS: " + score, labelStyle);
         levelLabel = new Label("NIVEL: 1", labelStyle);
-        energyLabel = new Label("ENERGIA: 100", labelStyle);
+        energyLabel = new Label("ENERGIA: " + player.getEnergy(), labelStyle);
         messageLabel = new Label("", labelStyle);
 
         Table table = new Table();
@@ -109,16 +133,12 @@ public class GameScreen implements Screen {
         table.setFillParent(true);
         table.pad(10);
 
-        table.add(scoreLabel).left();
-        table.row();
-        table.add(levelLabel).left();
-        table.row();
-        table.add(energyLabel).left();
-        table.row();
+        table.add(scoreLabel).left().row();
+        table.add(levelLabel).left().row();
+        table.add(energyLabel).left().row();
         table.add(messageLabel).left().padTop(20);
 
         hudStage.addActor(table);
-
     }
 
     @Override
@@ -127,6 +147,17 @@ public class GameScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         camera.position.x = player.getX();
+
+        float cameraHalfWidth = camera.viewportWidth / 2;
+        float mapWidthInPixels  = 100 * 32;
+
+        if (camera.position.x < cameraHalfWidth) {
+            camera.position.x = cameraHalfWidth;
+        }
+        if (camera.position.x > mapWidthInPixels - cameraHalfWidth) {
+            camera.position.x = mapWidthInPixels - cameraHalfWidth;
+        }
+
         camera.update();
 
         stage.act(delta);
@@ -141,44 +172,63 @@ public class GameScreen implements Screen {
     }
 
     private void checkCollisions() {
-        if (testCoin != null && player.getBounds().overlaps(testCoin.bounds)) {
-            addScore(10);
-            soundManager.playCoinSound();
-            testCoin.remove();
-            testCoin.dispose();
-            testCoin = null;
-        }
-
-        if (testDrone != null && player.getBounds().overlaps(testDrone.getBounds())) {
-            player.takeDamage(10);
-            updateEnergyLabel(player.getEnergy());
-        }
-
+        // Recorremos todos los actores de la escena para comprobar colisiones
         for (Actor actor : stage.getActors()) {
+            if (actor instanceof Coin) {
+                Coin coin = (Coin) actor;
+                if (player.getBounds().overlaps(coin.bounds)) {
+                    addScore(10);
+                    soundManager.playCoinSound();
+                    actor.remove();
+                    coin.dispose();
+                }
+            }
+            if (actor instanceof Drone) {
+                Drone drone = (Drone) actor;
+                if (player.getBounds().overlaps(drone.getBounds())) {
+                    player.takeDamage(10);
+                    updateEnergyLabel(player.getEnergy());
+                }
+            }
             if (actor instanceof Bullet) {
                 Bullet bullet = (Bullet) actor;
                 if (player.getBounds().overlaps(bullet.getBounds())) {
                     player.takeDamage(5);
                     updateEnergyLabel(player.getEnergy());
-                    bullet.remove();
+                    actor.remove();
                     bullet.dispose();
                 }
             }
         }
+
+        // Comprobación de portales
+        if (exitPortal != null && player.getBounds().overlaps(exitPortal)) {
+            game.setScreen(new GameScreen(game, "maps/level_02_seaport.tmx"));
+        }
+        if (victoryPortal != null && player.getBounds().overlaps(victoryPortal)) {
+            game.setScreen(new YouWinScreen(game));
+        }
     }
 
     private void handleMerchantInteraction() {
-        float distance = Math.abs(player.getX() - testMerchant.getX());
-        if (distance < 50) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.E) && !isInConversation) {
-                isInConversation = true;
+        boolean merchantFound = false;
+        for (Actor actor : stage.getActors()) {
+            if (actor instanceof Merchant) {
+                float distance = Math.abs(player.getX() - actor.getX());
+                if (distance < 50) {
+                    merchantFound = true;
+                    if (Gdx.input.isKeyJustPressed(Input.Keys.E) && !isInConversation) {
+                        isInConversation = true;
+                    }
+                    if (isInConversation) {
+                        messageLabel.setText("Cuidado con las torretas...");
+                    } else {
+                        messageLabel.setText("[E] para hablar");
+                    }
+                }
             }
-            if (isInConversation) {
-                messageLabel.setText("Cuidado con las torretas...");
-            } else {
-                messageLabel.setText("[E] para hablar");
-            }
-        } else {
+        }
+        if (!merchantFound) {
             isInConversation = false;
             messageLabel.setText("");
         }
@@ -194,7 +244,6 @@ public class GameScreen implements Screen {
     }
 
     public void gameOver() {
-        System.out.println("GAME OVER");
         soundManager.stopMusic();
         game.setScreen(new GameOverScreen(game));
     }
@@ -210,9 +259,6 @@ public class GameScreen implements Screen {
         map.dispose();
         stage.dispose();
         hudStage.dispose();
-        if (testCoin != null) {
-            testCoin.dispose();
-        }
     }
 
     public CyberRunner getGame() {
@@ -227,5 +273,4 @@ public class GameScreen implements Screen {
     public void resume() {}
     @Override
     public void hide() {}
-
 }
