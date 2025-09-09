@@ -13,17 +13,16 @@ public class SoundManager {
     private float sfxVolume;
 
     public SoundManager(ResourceManager resourceManager) {
-        // Obtenemos los sonidos
+
         this.backgroundMusic = resourceManager.assetManager.get("audio/music.mp3", Music.class);
         this.jumpSound = resourceManager.assetManager.get("audio/jump.wav", Sound.class);
         this.coinSound = resourceManager.assetManager.get("audio/coin.wav", Sound.class);
 
-        // --- CARGA LA CONFIGURACIÓN GUARDADA ---
+
         Preferences prefs = Gdx.app.getPreferences("CyberRunner_Settings");
         float musicVolume = prefs.getFloat("music_volume", 0.5f);
         this.sfxVolume = prefs.getFloat("sfx_volume", 0.5f);
 
-        // Aplicamos la configuración
         backgroundMusic.setLooping(true);
         backgroundMusic.setVolume(musicVolume);
     }
@@ -40,7 +39,6 @@ public class SoundManager {
         coinSound.play(sfxVolume);
     }
 
-    // --- MÉTODOS PARA CAMBIAR EL VOLUMEN ---
     public void setMusicVolume(float volume) {
         backgroundMusic.setVolume(volume);
     }

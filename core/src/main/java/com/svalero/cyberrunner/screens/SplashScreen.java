@@ -23,7 +23,7 @@ public class SplashScreen implements Screen {
         Timer.schedule(new Timer.Task() {
             @Override
             public void run() {
-                game.setScreen(new GameScreen(game, "maps/level_01_industrias.tmx"));
+                game.setScreen(new MenuScreen(game));
             }
         }, 2);
     }

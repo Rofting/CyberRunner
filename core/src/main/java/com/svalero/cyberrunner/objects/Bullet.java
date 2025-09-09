@@ -22,7 +22,6 @@ public class Bullet extends Actor {
         texture = new Texture(pixmap);
         pixmap.dispose();
 
-        // --- POSICIÓN Y TAMAÑO ---
         setSize(8, 8);
         setPosition(x, y);
         this.bounds = new Rectangle(x, y, getWidth(), getHeight());
