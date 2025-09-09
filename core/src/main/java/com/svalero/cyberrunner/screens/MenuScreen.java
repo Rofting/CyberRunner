@@ -35,33 +35,39 @@ public class MenuScreen implements Screen {
         Label titleLabel = new Label("Cyber Runner", VisUI.getSkin());
         TextButton startButton = new TextButton("Iniciar Juego", VisUI.getSkin());
         TextButton optionsButton = new TextButton("Opciones", VisUI.getSkin());
+        TextButton instructionsButton = new TextButton("Instrucciones", VisUI.getSkin());
+        TextButton scoresButton = new TextButton("Puntuaciones", VisUI.getSkin());
         TextButton exitButton = new TextButton("Salir", VisUI.getSkin());
 
         table.add(titleLabel).padBottom(40).row();
-        table.add(startButton).pad(10).fillX().uniformX();
-        table.row();
-        table.add(optionsButton).pad(10).fillX().uniformX();
-        table.row();
+        table.add(startButton).pad(10).fillX().uniformX().row();
+        table.add(optionsButton).pad(10).fillX().uniformX().row();
+        table.add(instructionsButton).pad(10).fillX().uniformX().row();
+        table.add(scoresButton).pad(10).fillX().uniformX().row();
         table.add(exitButton).pad(10).fillX().uniformX();
 
         startButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
-                game.setScreen(new GameScreen(game, "maps/level_01_industrias.tmx"));
+            @Override public void changed(ChangeEvent event, Actor actor) {
+                game.setScreen(new CharacterSelectionScreen(game));
             }
         });
-
         optionsButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            @Override public void changed(ChangeEvent event, Actor actor) {
                 game.setScreen(new OptionsScreen(game));
-
             }
         });
-
+        instructionsButton.addListener(new ChangeListener() {
+            @Override public void changed(ChangeEvent event, Actor actor) {
+                game.setScreen(new InstructionsScreen(game));
+            }
+        });
+        scoresButton.addListener(new ChangeListener() {
+            @Override public void changed(ChangeEvent event, Actor actor) {
+                game.setScreen(new HighScoresScreen(game));
+            }
+        });
         exitButton.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent event, Actor actor) {
+            @Override public void changed(ChangeEvent event, Actor actor) {
                 Gdx.app.exit();
             }
         });
@@ -75,24 +81,9 @@ public class MenuScreen implements Screen {
         stage.draw();
     }
 
-    @Override
-    public void resize(int width, int height) {
-        stage.getViewport().update(width, height, true);
-    }
-
-    @Override
-    public void dispose() {
-        stage.dispose();
-    }
-
-    @Override
-    public void hide() {
-        // Libera la memoria de esta pantalla cuando se cambia a otra
-        dispose();
-    }
-
-    @Override
-    public void pause() {}
-    @Override
-    public void resume() {}
+    @Override public void resize(int width, int height) { stage.getViewport().update(width, height, true); }
+    @Override public void dispose() { stage.dispose(); }
+    @Override public void hide() { dispose(); }
+    @Override public void pause() {}
+    @Override public void resume() {}
 }
